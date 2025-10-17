@@ -62,6 +62,28 @@ app.get("/movies-with-poster", async (_req, res) => {
   }
 });
 
+app.get("/movies/filter", async (req, res) => {
+  const title = req.query.title; // ambil parameter dari URL, misal ?title=Avatar
+
+  if (!title) {
+    return res.status(400).json({ error: "Parameter 'title' wajib diisi." });
+  }
+
+  const sql = `SELECT * FROM movies WHERE title LIKE ? LIMIT 50;`;
+  let conn;
+
+  try {
+    conn = await pool.getConnection();
+    const [rows] = await conn.query(sql, [`%${title}%`]);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: String(err) });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Movies API (Node) running on http://0.0.0.0:${PORT}`);
 });
