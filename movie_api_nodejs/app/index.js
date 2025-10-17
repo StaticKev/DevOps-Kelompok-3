@@ -10,8 +10,8 @@ const DB_HOST = "103.16.116.159";
 const DB_PORT = 3306;
 const DB_USER = "devops";
 const DB_PASSWORD = "ubaya";
-const DB_NAME = "movie";   
-const PORT = 8000;         
+const DB_NAME = "movie";
+const PORT = 8000;
 // =============================
 
 const pool = mysql.createPool({
@@ -25,8 +25,30 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+// === ENDPOINT 1: Tampilkan semua movie ===
 app.get("/movies", async (_req, res) => {
-  const sql = `SELECT * FROM movies limit 50;`;
+  const sql = `SELECT * FROM movies LIMIT 50;`;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const [rows] = await conn.query(sql);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: String(err) });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// === ENDPOINT 2: Tampilkan movie beserta poster ===
+app.get("/movies-with-poster", async (_req, res) => {
+  const sql = `
+    SELECT m.id, m.title, p.poster_url
+    FROM movies m
+    JOIN movie_poster p ON m.id = p.movie_id
+    LIMIT 50;
+  `;
   let conn;
   try {
     conn = await pool.getConnection();
